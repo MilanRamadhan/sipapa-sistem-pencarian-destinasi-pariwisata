@@ -29,7 +29,7 @@ SEEDS = [
 
 # ============ LIMIT DLL ============
 
-MAX_URLS = 10_000      # atau kecil dulu buat tes, mis: 20_000
+MAX_URLS = 10_000     
 MAX_CONCURRENT_TASKS = 50
 PER_DOMAIN_DELAY = 1.0
 REQUEST_TIMEOUT = 20
