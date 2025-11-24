@@ -3,6 +3,7 @@
 ## 🚀 Quick Start
 
 ### 1. Start Backend
+
 ```bash
 cd backend
 python api.py
@@ -10,6 +11,7 @@ python api.py
 ```
 
 ### 2. Start Frontend
+
 ```bash
 cd frontend
 npm run dev
@@ -23,16 +25,19 @@ npm run dev
 ### Search Endpoints
 
 #### Test TF-IDF Search
+
 ```bash
 curl "http://localhost:5000/search?query=bali&algo=tfidf&top_k=5"
 ```
 
 #### Test BM25 Search
+
 ```bash
 curl "http://localhost:5000/search?query=jakarta&algo=bm25&top_k=3"
 ```
 
 #### Compare Algorithms
+
 ```bash
 # TF-IDF
 curl -s "http://localhost:5000/search?query=wisata&algo=tfidf&top_k=5" | python -m json.tool > tfidf_results.json
@@ -49,6 +54,7 @@ diff tfidf_results.json bm25_results.json
 ### Document Endpoints
 
 #### Get Document by ID
+
 ```bash
 # Valid ID (0-4851)
 curl "http://localhost:5000/document/100" | python -m json.tool
@@ -62,11 +68,13 @@ curl "http://localhost:5000/document/99999" | python -m json.tool
 ### Evaluation Endpoints
 
 #### Evaluate Query
+
 ```bash
 curl "http://localhost:5000/evaluate?query=pantai&top_k=20" | python -m json.tool
 ```
 
 #### Evaluate Multiple Queries
+
 ```bash
 for query in "bali" "jakarta" "wisata" "pantai" "gunung"; do
   echo "=== Evaluating: $query ==="
@@ -85,24 +93,28 @@ done
 ### Error Handling Tests
 
 #### Empty Query
+
 ```bash
 curl "http://localhost:5000/search?query="
 # Expected: {"message": "Query parameter is required", ...}
 ```
 
 #### Invalid Algorithm
+
 ```bash
 curl "http://localhost:5000/search?query=test&algo=invalid"
 # Expected: {"error": "Invalid algorithm. Use 'tfidf' or 'bm25'"}
 ```
 
 #### Invalid top_k
+
 ```bash
 curl "http://localhost:5000/evaluate?query=test&top_k=999"
 # Expected: {"error": "top_k must be between 1 and 100"}
 ```
 
 #### Out of Range doc_id
+
 ```bash
 curl "http://localhost:5000/document/-1"
 curl "http://localhost:5000/document/10000"
@@ -114,6 +126,7 @@ curl "http://localhost:5000/document/10000"
 ## 📊 Performance Testing
 
 ### Measure Search Response Time
+
 ```bash
 # TF-IDF
 time curl -s "http://localhost:5000/search?query=bali&algo=tfidf&top_k=20" > /dev/null
@@ -123,6 +136,7 @@ time curl -s "http://localhost:5000/search?query=bali&algo=bm25&top_k=20" > /dev
 ```
 
 ### Bulk Query Testing
+
 ```bash
 # Create test queries file
 cat > test_queries.txt <<EOF
@@ -153,6 +167,7 @@ done < test_queries.txt
 ### Browser Tests
 
 1. **Homepage** (http://localhost:3000)
+
    - [ ] Hero article displays
    - [ ] Secondary article (black box) displays
    - [ ] 5 artikel kecil displays with images
@@ -160,6 +175,7 @@ done < test_queries.txt
    - [ ] Font Playfair Display di header
 
 2. **Search Page** (http://localhost:3000/search?q=bali&algo=tfidf)
+
    - [ ] Results display dengan gambar
    - [ ] Snippet truncated properly
    - [ ] Switch TF-IDF/BM25 works
@@ -167,6 +183,7 @@ done < test_queries.txt
    - [ ] Dashboard back button works
 
 3. **Detail Page** (http://localhost:3000/detail/0)
+
    - [ ] Full article content displays
    - [ ] Image displays (if available)
    - [ ] Paragraf spacing correct
@@ -185,6 +202,7 @@ done < test_queries.txt
 ## 🔧 Data Validation
 
 ### Check Data Consistency
+
 ```bash
 cd backend
 
@@ -220,6 +238,7 @@ print(f'Empty image: {(df[\"image_url\"].isna() | (df[\"image_url\"] == \"\")).s
 ```
 
 ### Check Index Quality
+
 ```bash
 python -c "
 import json
@@ -243,6 +262,7 @@ for word in common_words:
 ## 📈 Expected Results
 
 ### Search Results
+
 ```
 Query: "bali"
 Expected: 3-5 results with high scores (>10)
@@ -250,6 +270,7 @@ Top result should contain "bali" in title or content
 ```
 
 ### Evaluation Metrics
+
 ```
 Typical ranges:
 - Precision: 0.45 - 0.95
@@ -261,6 +282,7 @@ TF-IDF vs BM25: Should show different results
 ```
 
 ### Performance
+
 ```
 Search response time: < 100ms
 Document retrieval: < 50ms
@@ -272,6 +294,7 @@ Evaluation: < 2000ms (depends on query)
 ## ✅ Acceptance Criteria
 
 ### Backend API
+
 - [x] All endpoints return valid JSON
 - [x] Search returns non-empty results for common queries
 - [x] TF-IDF and BM25 give different scores
@@ -280,6 +303,7 @@ Evaluation: < 2000ms (depends on query)
 - [x] Response time < 100ms for search
 
 ### Frontend
+
 - [x] All pages load without errors
 - [x] Search results display correctly
 - [x] Images load (or show fallback)
@@ -288,6 +312,7 @@ Evaluation: < 2000ms (depends on query)
 - [x] Responsive on mobile
 
 ### Data Quality
+
 - [x] 4,852 articles indexed
 - [x] 0 duplicates
 - [x] 0 empty content
@@ -301,6 +326,7 @@ Evaluation: < 2000ms (depends on query)
 **Status:** All known bugs have been fixed! ✅
 
 If you find any new issues:
+
 1. Check error message in console
 2. Verify backend is running (port 5000)
 3. Verify frontend is running (port 3000)
@@ -312,6 +338,7 @@ If you find any new issues:
 ## 📞 Quick Troubleshooting
 
 ### Backend not starting
+
 ```bash
 # Check if port 5000 is in use
 netstat -ano | grep 5000
@@ -324,6 +351,7 @@ python api.py
 ```
 
 ### Frontend not starting
+
 ```bash
 # Check if port 3000 is in use
 netstat -ano | grep 3000
@@ -337,6 +365,7 @@ npm run dev
 ```
 
 ### Search returns empty
+
 ```bash
 # Regenerate index
 cd backend
@@ -347,6 +376,7 @@ python api.py
 ```
 
 ### Evaluation shows all 0
+
 ```bash
 # Check corpus path in evaluator.py
 # Should be: "data/corpus_clean.csv" not "backend/data/..."
@@ -360,15 +390,18 @@ python api.py
 ## 🎓 Testing Tips
 
 1. **Always test with multiple queries**
+
    - Common: "bali", "jakarta", "wisata"
    - Specific: "pantai kuta", "hotel yogyakarta"
    - Single word: "beach", "mountain"
 
 2. **Compare algorithms**
+
    - TF-IDF usually better for specific terms
    - BM25 usually better for longer queries
 
 3. **Check edge cases**
+
    - Empty query
    - Very long query (100+ words)
    - Special characters

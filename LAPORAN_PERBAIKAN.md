@@ -10,51 +10,61 @@
 Berdasarkan analisis mendalam yang dilakukan, berikut adalah semua bug yang telah diperbaiki:
 
 ### ✅ Bug #1: Search Returns Empty - **FIXED**
+
 **Status:** RESOLVED ✓  
 **Severity:** CRITICAL → FIXED
 
 **Masalah:**
+
 - Tokenization mismatch antara indexing dan query processing
 - Index dibuat tanpa preprocessing, query pakai stemming
 - Result: Semua query return empty array
 
 **Solusi yang Diterapkan:**
+
 1. ✅ Matikan stemming dan stopword removal di `search_engine.py`
 2. ✅ Improve preprocessing di `quick_indexing.py` agar konsisten
 3. ✅ Regenerate inverted index dengan preprocessing baru
 
 **File yang Dimodifikasi:**
+
 - `backend/search_engine.py` (lines 167-177)
 - `backend/quick_indexing.py` (lines 41-60)
 
 **Bukti Fix:**
+
 ```bash
 $ curl "http://localhost:5000/search?query=bali&algo=tfidf&top_k=3"
 # Returns: 3 results with proper scores ✓
 
-$ curl "http://localhost:5000/search?query=jakarta&algo=bm25&top_k=2"  
+$ curl "http://localhost:5000/search?query=jakarta&algo=bm25&top_k=2"
 # Returns: 2 different results from TF-IDF ✓
 ```
 
 ---
 
 ### ✅ Bug #2: No Validation for Invalid doc_id - **FIXED**
+
 **Status:** RESOLVED ✓  
 **Severity:** MEDIUM → FIXED
 
 **Masalah:**
+
 - Endpoint `/document/<doc_id>` tidak validate range
 - Bisa crash atau error jika request doc_id > 4851
 
 **Solusi yang Diterapkan:**
+
 1. ✅ Tambah validasi doc_id range (0-4851)
 2. ✅ Return error 404 dengan pesan yang jelas
 3. ✅ Include valid range dalam response
 
 **File yang Dimodifikasi:**
+
 - `backend/api.py` (lines 60-72)
 
 **Code:**
+
 ```python
 @app.get("/document/<int:doc_id>")
 def document_detail(doc_id):
@@ -69,6 +79,7 @@ def document_detail(doc_id):
 ```
 
 **Bukti Fix:**
+
 ```bash
 $ curl "http://localhost:5000/document/99999"
 {
@@ -81,23 +92,28 @@ $ curl "http://localhost:5000/document/99999"
 ---
 
 ### ✅ Bug #3: Hardcoded Backend URL - **FIXED**
+
 **Status:** RESOLVED ✓  
 **Severity:** MEDIUM → FIXED
 
 **Masalah:**
+
 - Frontend hardcode `http://localhost:5000` untuk evaluation endpoint
 - Tidak bisa deploy ke production
 - Tidak konsisten dengan `api.ts` yang pakai environment variable
 
 **Solusi yang Diterapkan:**
+
 1. ✅ Gunakan `process.env.NEXT_PUBLIC_BACKEND_URL`
 2. ✅ Fallback ke localhost untuk development
 3. ✅ Konsisten dengan pattern di `lib/api.ts`
 
 **File yang Dimodifikasi:**
+
 - `frontend/src/app/search/page.tsx` (line 60)
 
 **Code:**
+
 ```typescript
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 const response = await fetch(`${BASE_URL}/evaluate?query=${encodeURIComponent(q)}&top_k=20`);
@@ -106,10 +122,12 @@ const response = await fetch(`${BASE_URL}/evaluate?query=${encodeURIComponent(q)
 ---
 
 ### ✅ Enhancement #1: Better Error Handling - **ADDED**
+
 **Status:** IMPLEMENTED ✓  
 **Priority:** HIGH
 
 **Fitur yang Ditambahkan:**
+
 1. ✅ Validate query parameter (tidak boleh kosong)
 2. ✅ Validate algo parameter (hanya tfidf atau bm25)
 3. ✅ Validate top_k range (1-100)
@@ -117,9 +135,11 @@ const response = await fetch(`${BASE_URL}/evaluate?query=${encodeURIComponent(q)
 5. ✅ Try-catch untuk evaluation endpoint
 
 **File yang Dimodifikasi:**
+
 - `backend/api.py` (lines 34-55, 85-120)
 
 **Bukti Implementation:**
+
 ```bash
 # Test 1: Empty query
 $ curl "http://localhost:5000/search?query="
@@ -149,10 +169,12 @@ $ curl "http://localhost:5000/evaluate?query=test&top_k=999"
 ---
 
 ### ✅ Enhancement #2: Consistent Preprocessing - **IMPROVED**
+
 **Status:** IMPLEMENTED ✓  
 **Priority:** HIGH
 
 **Improvement yang Dilakukan:**
+
 1. ✅ Preprocessing function di `quick_indexing.py` sekarang konsisten dengan `search_engine.py`
 2. ✅ Buang URL dari konten
 3. ✅ Normalisasi ke lowercase
@@ -160,9 +182,11 @@ $ curl "http://localhost:5000/evaluate?query=test&top_k=999"
 5. ✅ Filter token pendek (< 2 karakter)
 
 **File yang Dimodifikasi:**
+
 - `backend/quick_indexing.py` (lines 42-59)
 
 **Code:**
+
 ```python
 def preprocess_text(text):
     """Preprocessing konsisten dengan search_engine.py"""
@@ -174,6 +198,7 @@ def preprocess_text(text):
 ```
 
 **Impact:**
+
 - Index size berkurang dari 79,425 → 45,616 terms (lebih efisien)
 - Search results lebih akurat
 - Konsisten antara indexing dan search
@@ -185,6 +210,7 @@ def preprocess_text(text):
 ### Test Suite 1: Search Functionality ✅
 
 #### Test 1.1: TF-IDF Search
+
 ```bash
 Query: "jakarta"
 Algorithm: TF-IDF
@@ -194,6 +220,7 @@ Score: 29.59 ✓
 ```
 
 #### Test 1.2: BM25 Search
+
 ```bash
 Query: "jakarta"
 Algorithm: BM25
@@ -203,6 +230,7 @@ Score: 3.59 ✓
 ```
 
 #### Test 1.3: Different Results Validation
+
 ```bash
 TF-IDF top result doc_id: 3501
 BM25 top result doc_id: 4393
@@ -214,6 +242,7 @@ Status: DIFFERENT ✓ (algorithms working correctly)
 ### Test Suite 2: Document Retrieval ✅
 
 #### Test 2.1: Valid Document ID
+
 ```bash
 Request: GET /document/0
 Response: 200 OK ✓
@@ -223,6 +252,7 @@ Title: "Unik! Kamar Hotel Bertema Kereta Api di Jepang..."
 ```
 
 #### Test 2.2: Invalid Document ID (Out of Range)
+
 ```bash
 Request: GET /document/99999
 Response: 404 Not Found ✓
@@ -235,6 +265,7 @@ Valid Range: "0-4851" ✓
 ### Test Suite 3: Evaluation Metrics ✅
 
 #### Test 3.1: Evaluation Working
+
 ```bash
 Query: "wisata"
 Ground Truth: 167 relevant docs (generated on-the-fly) ✓
@@ -261,6 +292,7 @@ Status: TF-IDF performs better on this query ✓
 ### Test Suite 4: Error Handling ✅
 
 #### Test 4.1: Empty Query
+
 ```bash
 Request: GET /search?query=
 Response: 200 OK (graceful handling) ✓
@@ -268,6 +300,7 @@ Message: "Query parameter is required" ✓
 ```
 
 #### Test 4.2: Invalid Algorithm
+
 ```bash
 Request: GET /search?query=test&algo=invalid
 Response: 400 Bad Request ✓
@@ -275,6 +308,7 @@ Error: "Invalid algorithm. Use 'tfidf' or 'bm25'" ✓
 ```
 
 #### Test 4.3: Invalid top_k
+
 ```bash
 Request: GET /evaluate?query=test&top_k=999
 Response: 400 Bad Request ✓
@@ -287,14 +321,14 @@ Error: "top_k must be between 1 and 100" ✓
 
 ### Before vs After
 
-| Metric | Before Fix | After Fix | Status |
-|--------|------------|-----------|--------|
-| Search Results | 0 (broken) | 45,616 terms indexed | ✅ FIXED |
-| Index Size | 79,425 terms | 45,616 terms | ✅ 43% smaller |
-| Search Speed | N/A | ~1-2ms | ✅ Fast |
-| Error Handling | Minimal | Comprehensive | ✅ Improved |
-| Validation | None | Full validation | ✅ Added |
-| TF-IDF vs BM25 | Same (bug) | Different | ✅ Working |
+| Metric         | Before Fix   | After Fix            | Status         |
+| -------------- | ------------ | -------------------- | -------------- |
+| Search Results | 0 (broken)   | 45,616 terms indexed | ✅ FIXED       |
+| Index Size     | 79,425 terms | 45,616 terms         | ✅ 43% smaller |
+| Search Speed   | N/A          | ~1-2ms               | ✅ Fast        |
+| Error Handling | Minimal      | Comprehensive        | ✅ Improved    |
+| Validation     | None         | Full validation      | ✅ Added       |
+| TF-IDF vs BM25 | Same (bug)   | Different            | ✅ Working     |
 
 ### Current Performance
 
@@ -325,6 +359,7 @@ Evaluation Metrics:
 ### Backend Files
 
 1. **`backend/api.py`**
+
    - Added doc_id validation
    - Added query validation
    - Added algo validation
@@ -333,17 +368,20 @@ Evaluation Metrics:
    - Added try-catch for evaluation
 
 2. **`backend/search_engine.py`**
+
    - Disabled stemming (commented out)
    - Disabled stopword removal (commented out)
    - Kept basic preprocessing (lowercase, regex)
 
 3. **`backend/quick_indexing.py`**
+
    - Added `preprocess_text()` function
    - Consistent preprocessing with search_engine
    - Better tokenization with regex
    - Filter short tokens
 
 4. **`backend/data/inverted_index.json`**
+
    - Regenerated with new preprocessing
    - Reduced from 79,425 → 45,616 terms
    - More accurate term matching
@@ -364,8 +402,9 @@ Evaluation Metrics:
 ## ✅ VALIDATION CHECKLIST
 
 ### Search Functionality
+
 - [x] Query "bali" returns results
-- [x] Query "jakarta" returns results  
+- [x] Query "jakarta" returns results
 - [x] Query "wisata" returns results
 - [x] TF-IDF and BM25 return different results
 - [x] Scores are not zero
@@ -373,6 +412,7 @@ Evaluation Metrics:
 - [x] Image URLs are present
 
 ### API Endpoints
+
 - [x] `/search` returns results
 - [x] `/search` validates query parameter
 - [x] `/search` validates algo parameter
@@ -383,6 +423,7 @@ Evaluation Metrics:
 - [x] CORS working from frontend
 
 ### Frontend Integration
+
 - [x] Search page displays results
 - [x] Click result opens detail page
 - [x] Detail page displays full content
@@ -392,6 +433,7 @@ Evaluation Metrics:
 - [x] Environment variable for backend URL
 
 ### Data Quality
+
 - [x] 4,852 articles (100% consistency)
 - [x] 0 duplicate URLs
 - [x] 0 empty content
@@ -406,23 +448,28 @@ Evaluation Metrics:
 ### Priority: LOW (Nice to Have)
 
 1. **Caching**
+
    - Add Redis/in-memory cache for frequent queries
    - Reduce API response time by ~80%
 
 2. **Pagination**
+
    - Add offset/limit parameters
    - Support browsing more than top-k results
 
 3. **Query Suggestions**
+
    - Implement "Did you mean..." for typos
    - Show related/popular queries
 
 4. **Stemming (Advanced)**
+
    - Re-enable stemming dengan Sastrawi
    - Regenerate index dengan stemming
    - Better recall untuk query variations
 
 5. **Stopword Removal (Advanced)**
+
    - Re-enable stopword filtering
    - Smaller index size
    - Better precision
@@ -466,10 +513,12 @@ npm start
 ### Environment Variables
 
 **Backend:**
+
 - `FLASK_ENV=production`
 - `FLASK_DEBUG=0`
 
 **Frontend:**
+
 - `NEXT_PUBLIC_BACKEND_URL=https://api.sipapa.com`
 
 ---
@@ -479,21 +528,25 @@ npm start
 ### Masalah Umum dalam IR Systems
 
 1. **Tokenization Mismatch** ⚠️
+
    - Index dan query harus pakai preprocessing yang SAMA
    - Jika index pakai stemming, query juga harus stem
    - Kalau tidak: token tidak match → no results
 
 2. **Validation is Critical** ⚠️
+
    - Always validate user input (query, parameters)
    - Provide clear error messages
    - Handle edge cases (empty query, invalid ID)
 
 3. **Environment Variables** ⚠️
+
    - Never hardcode URLs/credentials
    - Use environment variables
    - Different configs for dev/staging/prod
 
 4. **Testing is Essential** ⚠️
+
    - Test each endpoint individually
    - Test error cases, not just happy path
    - Validate data consistency
@@ -512,6 +565,7 @@ npm start
 **Rating:** 9.5/10 (naik dari 8.5/10)
 
 **Kelebihan:**
+
 - ✅ Search engine berfungsi sempurna
 - ✅ TF-IDF dan BM25 memberikan hasil berbeda (correct)
 - ✅ Evaluation metrics akurat dan realistis
@@ -523,6 +577,7 @@ npm start
 - ✅ Performance bagus (<2ms search)
 
 **Improvement yang Dilakukan:**
+
 - 🔧 Fixed critical search bug
 - 🔧 Added input validation
 - 🔧 Improved error handling
@@ -532,6 +587,7 @@ npm start
 - 🔧 Regenerated optimized index
 
 **Ready for:**
+
 - ✅ Production deployment
 - ✅ Demo presentation
 - ✅ User testing
