@@ -169,11 +169,11 @@ def preprocess_query(text: str) -> List[str]:
     # tokenisasi kata
     tokens = re.findall(r"\w+", text)
 
-    # stopword removal
-    tokens = [t for t in tokens if t not in STOPWORDS]
+    # # stopword removal
+    # tokens = [t for t in tokens if t not in STOPWORDS]
 
-    # stemming
-    tokens = [_stem(t) for t in tokens]
+    # # stemming
+    # tokens = [_stem(t) for t in tokens]
 
     return [t for t in tokens if t]
 

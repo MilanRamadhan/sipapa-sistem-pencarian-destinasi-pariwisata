@@ -39,7 +39,20 @@ def search():
     top_k = int(request.args.get("top_k", 20))
 
     if not query:
-        return jsonify([])
+        return jsonify({
+            "results": [],
+            "message": "Query parameter is required",
+            "query": "",
+            "algo": algo,
+            "count": 0
+        })
+    
+    # Validate algo parameter
+    if algo not in ["tfidf", "bm25"]:
+        return jsonify({
+            "error": "Invalid algorithm. Use 'tfidf' or 'bm25'",
+            "requested_algo": algo
+        }), 400
 
     if algo == "bm25":
         results = bm25_search(query, top_k=top_k)
@@ -63,6 +76,15 @@ def metrics():
 # ===============================
 @app.get("/document/<int:doc_id>")
 def document_detail(doc_id):
+    # Validate doc_id range
+    from search_engine import DOC_META_MAP
+    if doc_id < 0 or doc_id >= len(DOC_META_MAP):
+        return jsonify({
+            "error": "Document ID out of range",
+            "valid_range": f"0-{len(DOC_META_MAP)-1}",
+            "requested_id": doc_id
+        }), 404
+    
     doc = get_document(doc_id)
     if not doc:
         return jsonify({"error": "Document not found"}), 404
@@ -77,7 +99,7 @@ def evaluate():
     """
     Endpoint untuk evaluasi perbandingan TF-IDF vs BM25
     Params:
-        - query: search query string
+        - query: search query string (required)
         - top_k: number of results (default 20)
     
     Returns:
@@ -95,10 +117,22 @@ def evaluate():
         }
     """
     query = request.args.get("query", "").strip()
-    top_k = int(request.args.get("top_k", 20))
     
     if not query:
-        return jsonify({"error": "Query parameter is required"}), 400
+        return jsonify({
+            "error": "Query parameter is required",
+            "usage": "/evaluate?query=<search_term>&top_k=<number>"
+        }), 400
+    
+    try:
+        top_k = int(request.args.get("top_k", 20))
+        if top_k < 1 or top_k > 100:
+            return jsonify({
+                "error": "top_k must be between 1 and 100",
+                "requested": top_k
+            }), 400
+    except ValueError:
+        return jsonify({"error": "top_k must be a valid integer"}), 400
     
     # Import search engine module untuk evaluasi
     import search_engine as se
@@ -111,10 +145,15 @@ def evaluate():
             else:
                 return se.tfidf_search(q, top_k=top_k)
     
-    search_mock = SearchEngineMock()
-    result = evaluate_query_both_algos(query, search_mock, top_k=top_k)
-    
-    return jsonify(result)
+    try:
+        search_mock = SearchEngineMock()
+        result = evaluate_query_both_algos(query, search_mock, top_k=top_k)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            "error": "Evaluation failed",
+            "message": str(e)
+        }), 500
 
 
 # ===============================

@@ -35,15 +35,28 @@ doc_meta_df = pd.DataFrame(doc_meta)
 doc_meta_df.to_csv(DOC_META_FILE, index=False)
 print(f"     ✓ Saved: {DOC_META_FILE}")
 
-# 2. Buat inverted_index.json (simple tokenization)
+# 2. Buat inverted_index.json (consistent preprocessing)
+import re
+
 print("\n[2/2] Membuat inverted_index.json...")
 inverted_index = defaultdict(lambda: defaultdict(int))
 
+def preprocess_text(text):
+    """Preprocessing konsisten dengan search_engine.py"""
+    text = text.lower()
+    # Buang URL
+    text = re.sub(r"http\S+|www\.\S+", " ", text)
+    # Hanya alphanumeric dan spasi
+    text = re.sub(r"[^0-9a-zA-Z\s]", " ", text)
+    # Tokenisasi
+    tokens = re.findall(r"\w+", text)
+    # Filter token pendek
+    return [t for t in tokens if len(t) > 1]
+
 for idx, row in df.iterrows():
-    content = str(row["content_clean"]).lower()
-    # Simple tokenization: split by whitespace dan ambil alphanumeric
-    tokens = content.split()
-    tokens = [t.strip() for t in tokens if t.strip() and len(t.strip()) > 1]
+    content = str(row["content_clean"])
+    # Gunakan preprocessing yang sama dengan search
+    tokens = preprocess_text(content)
     
     # Count term frequency per document
     for token in tokens:
