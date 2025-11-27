@@ -10,6 +10,30 @@ type DetailPageProps = {
   params: Promise<DetailParams>;
 };
 
+// 🔎 Heuristik simpel buat nebak heading (subjudul)
+function isLikelyHeading(line: string): boolean {
+  const text = line.trim();
+  if (!text) return false;
+
+  // Jangan treat kalimat yang diakhiri titik / tanda tanya / seru sebagai heading
+  if (/[.?!]$/.test(text)) return false;
+
+  // Skip kalau ada URL / @
+  if (/@|http/.test(text)) return false;
+
+  const words = text.split(/\s+/);
+  if (words.length < 2 || words.length > 10) return false;
+
+  // Hitung kata yang huruf pertamanya kapital
+  const capitalizedCount = words.filter((w) => /^[A-ZÀ-Ý]/.test(w)).length;
+
+  // Harus ada minimal 2 kata kapital dan proporsinya lumayan
+  if (capitalizedCount < 2) return false;
+  if (capitalizedCount / words.length < 0.4) return false;
+
+  return true;
+}
+
 export default async function DetailPage(props: DetailPageProps) {
   // ⬅️ WAJIB: await dulu props.params
   const { id } = await props.params;
@@ -60,7 +84,34 @@ export default async function DetailPage(props: DetailPageProps) {
           </figure>
         )}
 
-        <article className="text-sm leading-relaxed text-neutral-800 whitespace-pre-line">{doc.content || "Konten artikel tidak tersedia."}</article>
+        <article className="text-sm leading-relaxed text-neutral-800">
+          {doc.content ? (
+            doc.content
+              .split(/\n+/) // pisah per paragraf
+              .map((rawLine: string, idx: number) => {
+                const line = rawLine.trim();
+                if (!line) return null;
+
+                if (isLikelyHeading(line)) {
+                  // 🧱 Subjudul (H2)
+                  return (
+                    <h2 key={idx} className="heading-serif text-xl md:text-2xl font-semibold mt-6 mb-3">
+                      {line}
+                    </h2>
+                  );
+                }
+
+                // 📄 Paragraf biasa
+                return (
+                  <p key={idx} className="mb-3">
+                    {line}
+                  </p>
+                );
+              })
+          ) : (
+            <p>Konten artikel tidak tersedia.</p>
+          )}
+        </article>
       </div>
     </main>
   );

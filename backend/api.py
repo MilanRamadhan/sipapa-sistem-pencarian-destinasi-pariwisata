@@ -7,6 +7,7 @@ from search_engine import (
     get_metrics,
     get_document,
 )
+
 from evaluator import evaluate_query_both_algos
 
 app = Flask(__name__)
@@ -46,7 +47,7 @@ def search():
             "algo": algo,
             "count": 0
         })
-    
+
     # Validate algo parameter
     if algo not in ["tfidf", "bm25"]:
         return jsonify({
@@ -75,19 +76,20 @@ def metrics():
 # Document Detail Endpoint
 # ===============================
 @app.get("/document/<int:doc_id>")
-def document_detail(doc_id):
-    # Validate doc_id range
-    from search_engine import DOC_META_MAP
-    if doc_id < 0 or doc_id >= len(DOC_META_MAP):
-        return jsonify({
-            "error": "Document ID out of range",
-            "valid_range": f"0-{len(DOC_META_MAP)-1}",
-            "requested_id": doc_id
-        }), 404
-    
+def document_detail(doc_id: int):
+    """
+    Ambil detail satu dokumen berdasarkan doc_id.
+    Sekarang kita langsung pakai get_document()
+    dan nggak cek len(DOC_META_MAP) lagi,
+    karena doc_id di dataset bisa aja nggak 0..N-1.
+    """
     doc = get_document(doc_id)
     if not doc:
-        return jsonify({"error": "Document not found"}), 404
+        return jsonify({
+            "error": "Document not found",
+            "requested_id": doc_id
+        }), 404
+
     return jsonify(doc)
 
 
@@ -101,29 +103,22 @@ def evaluate():
     Params:
         - query: search query string (required)
         - top_k: number of results (default 20)
-    
+
     Returns:
         {
             "query": "...",
-            "tfidf": {
-                "runtime": ms,
-                "precision": 0.0-1.0,
-                "recall": 0.0-1.0,
-                "f1": 0.0-1.0,
-                "map": 0.0-1.0,
-                ...
-            },
+            "tfidf": {...},
             "bm25": {...}
         }
     """
     query = request.args.get("query", "").strip()
-    
+
     if not query:
         return jsonify({
             "error": "Query parameter is required",
             "usage": "/evaluate?query=<search_term>&top_k=<number>"
         }), 400
-    
+
     try:
         top_k = int(request.args.get("top_k", 20))
         if top_k < 1 or top_k > 100:
@@ -133,18 +128,16 @@ def evaluate():
             }), 400
     except ValueError:
         return jsonify({"error": "top_k must be a valid integer"}), 400
-    
-    # Import search engine module untuk evaluasi
+
     import search_engine as se
-    
-    # Buat object mock untuk evaluator
+
     class SearchEngineMock:
         def search(self, q, algo="tfidf", top_k=20):
             if algo == "bm25":
                 return se.bm25_search(q, top_k=top_k)
             else:
                 return se.tfidf_search(q, top_k=top_k)
-    
+
     try:
         search_mock = SearchEngineMock()
         result = evaluate_query_both_algos(query, search_mock, top_k=top_k)
