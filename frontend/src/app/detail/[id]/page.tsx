@@ -10,27 +10,38 @@ type DetailPageProps = {
   params: Promise<DetailParams>;
 };
 
-// -------------------------
-// DETECT SUBHEADINGS (H2)
-// -------------------------
+// 🔎 Heuristik simpel buat nebak subjudul (H2)
 function isLikelyHeading(line: string): boolean {
   const text = line.trim();
   if (!text) return false;
 
-  // Jangan dianggap heading kalau diakhiri tanda titik/tanya/seru
-  if (/[.?!]$/.test(text)) return false;
-
-  // Skip kalau ada URL atau @
-  if (/http|@/i.test(text)) return false;
+  // Skip kalau ada URL / handle sosmed
+  if (/@|http/.test(text)) return false;
 
   const words = text.split(/\s+/);
   if (words.length < 2 || words.length > 12) return false;
 
-  // Hitung kata yang huruf pertamanya kapital (A-Z)
-  const capitalized = words.filter((w) => /^[A-Z]/.test(w)).length;
+  const capitalizedCount = words.filter((w) => /^[A-ZÀ-Ý]/.test(w)).length;
 
-  if (capitalized < 2) return false;
-  if (capitalized / words.length < 0.35) return false;
+  // Harus ada minimal 2 kata kapital
+  if (capitalizedCount < 2) return false;
+
+  // Proporsi kata kapital cukup besar
+  if (capitalizedCount / words.length < 0.4) return false;
+
+  // Kalau diakhiri titik, biasanya itu kalimat biasa → buang
+  if (text.endsWith(".")) return false;
+
+  // Kalau diakhiri tanda seru, treat sebagai heading hanya kalau sangat pendek
+  if (text.endsWith("!")) {
+    return words.length <= 6;
+  }
+
+  // Kalau diakhiri tanda tanya (banyak subjudul Kompas model gini),
+  // boleh jadi heading kalau kalimat pendek & cukup kapital
+  if (text.endsWith("?")) {
+    return words.length <= 8 && capitalizedCount / words.length >= 0.5;
+  }
 
   return true;
 }
@@ -47,27 +58,8 @@ function isLeadParagraph(line: string): boolean {
   return /^([A-Z]+,\s*)?KOMPAS\.com\b/.test(text);
 }
 
-// -----------------------------
-// DETECT PHOTO CREDITS (skip)
-// -----------------------------
-function isPhotoCredit(line: string): boolean {
-  const lower = line.trim().toLowerCase();
-
-  // contoh: "KOMPAS.com/M LUKMAN PABRIYANTO ...."
-  if (lower.startsWith("kompas.com/")) return true;
-  if (lower.startsWith("kompas.com /")) return true;
-
-  // sering ada kata "dok." atau "dokumentasi" + kompas.com
-  if (lower.includes("kompas.com") && lower.includes("dok")) return true;
-
-  // kalau baris pendek tapi ada "kompas.com" dan "foto"
-  if (lower.includes("kompas.com") && lower.includes("foto")) return true;
-
-  return false;
-}
-
 export default async function DetailPage(props: DetailPageProps) {
-  // ⬅️ tetap pakai pola yang sudah jalan di project kamu
+  // ⬅️ WAJIB: await dulu props.params
   const { id } = await props.params;
 
   const doc = await getDocument(id);
@@ -118,53 +110,50 @@ export default async function DetailPage(props: DetailPageProps) {
 
         <article className="text-sm leading-relaxed text-neutral-800">
           {doc.content ? (
-            doc.content.split(/\n+/).map((rawLine: string, idx: number) => {
-              const line = rawLine.trim();
-              if (!line) return null;
+            doc.content
+              .split(/\n+/) // pisah per baris/paragraf
+              .map((rawLine: string, idx: number) => {
+                const line = rawLine.trim();
+                if (!line) return null;
 
-              // 1) skip credit foto
-              if (isPhotoCredit(line)) {
-                return null;
-              }
-
-              // 2) subjudul -> H2
-              if (isLikelyHeading(line)) {
-                return (
-                  <h2 key={idx} className="heading-serif text-xl md:text-2xl font-semibold mt-6 mb-3">
-                    {line}
-                  </h2>
-                );
-              }
-
-              // 3) lead paragraph (JAKARTA, KOMPAS.com ...) -> hanya prefix yang bold
-              if (isLeadParagraph(line)) {
-                // Extract prefix (JAKARTA, KOMPAS.com -) dan sisanya
-                const match = line.match(/^([A-Z]+,\s*KOMPAS\.com\s*[-–—]?\s*)/);
-                if (match) {
-                  const prefix = match[1];
-                  const rest = line.substring(prefix.length);
+                // 3) lead paragraph (JAKARTA, KOMPAS.com ...) -> hanya prefix yang bold
+                if (isLeadParagraph(line)) {
+                  // Extract prefix (JAKARTA, KOMPAS.com -) dan sisanya
+                  const match = line.match(/^([A-Z]+,\s*KOMPAS\.com\s*[-–—]?\s*)/);
+                  if (match) {
+                    const prefix = match[1];
+                    const rest = line.substring(prefix.length);
+                    return (
+                      <p key={idx} className="mb-3">
+                        <span className="font-bold">{prefix}</span>
+                        {rest}
+                      </p>
+                    );
+                  }
+                  // Fallback jika pattern tidak match persis
                   return (
                     <p key={idx} className="mb-3">
-                      <span className="font-bold">{prefix}</span>
-                      {rest}
+                      {line}
                     </p>
                   );
                 }
-                // Fallback jika pattern tidak match persis
+
+                // Subjudul (H2)
+                if (isLikelyHeading(line)) {
+                  return (
+                    <h2 key={idx} className="heading-serif text-xl md:text-2xl font-semibold mt-6 mb-3">
+                      {line}
+                    </h2>
+                  );
+                }
+
+                // Paragraf biasa
                 return (
                   <p key={idx} className="mb-3">
                     {line}
                   </p>
                 );
-              }
-
-              // 4) paragraf biasa
-              return (
-                <p key={idx} className="mb-3">
-                  {line}
-                </p>
-              );
-            })
+              })
           ) : (
             <p>Konten artikel tidak tersedia.</p>
           )}
