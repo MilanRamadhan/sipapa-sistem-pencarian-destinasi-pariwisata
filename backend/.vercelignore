@@ -1,0 +1,52 @@
+# ============================
+# 1. Cache & virtual env
+# ============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+venv/
+.venv/
+.env
+
+# ============================
+# 2. Notebook & laporan
+# ============================
+*.ipynb
+LAPORAN.md
+README.md
+
+# ============================
+# 3. File evaluasi & analisis
+#    (ga dipakai waktu runtime search)
+# ============================
+data/algorithm_comparison.csv
+data/bm25_evaluation.csv
+data/tfidf_evaluation.csv
+data/evaluation_comparison.png
+data/evaluation_per_query.png
+data/evaluation_report.json
+
+# kalau hasil scraping mentah tidak dipakai runtime:
+data/scraped.csv
+
+# ============================
+# 4. Script helper yg cuma dipakai saat offline
+#    (crawling, debug, generate ground truth, dll)
+# ============================
+backfill_all_images.py
+crawling.py
+debug_eval.py
+debug_ground_truth.py
+evaluation.py
+evaluator.py
+generate_ground_truth.py
+rescrape_images.py
+scrape_articles.py
+scraping.ipynb   # ini juga ke-cover *.ipynb sih, cuma biar jelas
+
+# ============================
+# 5. Gambar / media
+# ============================
+*.png
