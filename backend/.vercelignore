@@ -30,6 +30,7 @@ data/evaluation_report.json
 
 # kalau hasil scraping mentah tidak dipakai runtime:
 data/scraped.csv
+data/corpus_clean.csv
 
 # ============================
 # 4. Script helper yg cuma dipakai saat offline
