@@ -18,23 +18,21 @@ LAPORAN.md
 README.md
 
 # ============================
-# 3. File evaluasi & analisis
-#    (ga dipakai waktu runtime search)
+# 3. SEMUA isi folder data
+#    (kita whitelist yg penting di bawah)
 # ============================
-data/algorithm_comparison.csv
-data/bm25_evaluation.csv
-data/tfidf_evaluation.csv
-data/evaluation_comparison.png
-data/evaluation_per_query.png
-data/evaluation_report.json
+data/*
 
-# kalau hasil scraping mentah tidak dipakai runtime:
-data/scraped.csv
-data/corpus_clean.csv
+# ===== Whitelist file data yg dipakai runtime =====
+!data/inverted_index.json
+!data/doc_meta.csv
+!data/urls.txt
+# kalau API kamu butuh ini juga, buka komentar:
+# !data/scraped_cleaned.csv
+# !data/search_functions.pkl
 
 # ============================
-# 4. Script helper yg cuma dipakai saat offline
-#    (crawling, debug, generate ground truth, dll)
+# 4. Script helper yg cuma dipakai offline
 # ============================
 backfill_all_images.py
 crawling.py
@@ -45,7 +43,6 @@ evaluator.py
 generate_ground_truth.py
 rescrape_images.py
 scrape_articles.py
-scraping.ipynb   # ini juga ke-cover *.ipynb sih, cuma biar jelas
 
 # ============================
 # 5. Gambar / media
