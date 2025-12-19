@@ -51,3 +51,45 @@ export async function getDocument(id?: string | number | null) {
 
   return res.json();
 }
+
+export type AggregateMetrics = {
+  mean_precision: number;
+  mean_recall: number;
+  mean_f1: number;
+  mean_ap: number; // This is MAP!
+  mean_runtime: number;
+  std_precision?: number;
+  std_recall?: number;
+  std_f1?: number;
+  std_ap?: number;
+};
+
+export type AggregateEvaluationResult = {
+  tfidf: AggregateMetrics;
+  bm25: AggregateMetrics;
+  total_queries: number;
+  top_k: number;
+  queries_evaluated?: string[];
+};
+
+export async function getAggregateEvaluation(topK: number = 20): Promise<AggregateEvaluationResult | null> {
+  try {
+    const params = new URLSearchParams({
+      top_k: String(topK),
+    });
+
+    const res = await fetch(`${BASE_URL}/evaluate/aggregate?${params.toString()}`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.warn("Failed to fetch aggregate evaluation", res.status);
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching aggregate evaluation:", error);
+    return null;
+  }
+}

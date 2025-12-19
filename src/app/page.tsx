@@ -1,6 +1,7 @@
 import { searchArticles } from "@/lib/api";
 import SearchBar from "@/components/SearchBar";
 import SafeImage from "@/components/SafeImage";
+import EvaluationButton from "@/components/EvaluationButton";
 
 export default async function HomePage() {
   // Ambil artikel "unggulan" untuk ditampilkan di landing
@@ -38,7 +39,10 @@ export default async function HomePage() {
             <span className="cursor-pointer hover:text-black">Semua</span>
           </nav>
 
-          <SearchBar />
+          <div className="flex items-center gap-3">
+            <EvaluationButton />
+            <SearchBar />
+          </div>
         </div>
       </header>
 
